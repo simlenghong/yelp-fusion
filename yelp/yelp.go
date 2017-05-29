@@ -23,8 +23,10 @@ type ParamSearchBusiness struct
 
 //For performance, return the required fields only
 type RespSearchBusinessMin struct {
-	Total      int64      `json:"total"`
-	Businesses []BusinessMin `json:"businesses"`
+	Term 		string `json:"term"`
+	Location 	string `json:"location"`
+	Total      	int64      `json:"total"`
+	Businesses 	[]BusinessMin `json:"businesses"`
 }
 
 //For performance, return the required fields only
@@ -44,7 +46,9 @@ type BusinessMin struct {
 }
 
 type RespSearchBusiness struct {
-	Total      	int64      `json:"total"`
+	Term 		string `json:"term"`
+	Location 	string `json:"location"`
+	Total      	int64  `json:"total"`
 	Businesses 	[]Business `json:"businesses"`
 	Region 		struct {
 				Center struct {
@@ -145,6 +149,9 @@ func SearchBusinessMin(pParamSearchBusiness ParamSearchBusiness, pAccessTokenPtr
 	if lErr != nil {
 		return nil, lErr
 	}
+	
+	lRespSearchBusinessMin.Term = pParamSearchBusiness.Term
+	lRespSearchBusinessMin.Location = pParamSearchBusiness.Location
 
 	return lRespSearchBusinessMin, nil
 }

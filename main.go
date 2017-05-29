@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 	"github.com/simlenghong/yelp-fusion/yelp"
+	"github.com/simlenghong/yelp-fusion/mongo"
 )
 
 const (
@@ -60,11 +61,7 @@ func HandlerPageIndex(pResponseWriter http.ResponseWriter, pHttpRequest *http.Re
 
 //Handler for searching business in yelp
 func HandlerSearchBusinessInYelp(pResponseWriter http.ResponseWriter, pRequest *http.Request) {
-	if IsYelpAccessTokenExpired() {
-		SetYelpAccessToken()
-	}
-
-	log.Println("Yelp access token expiring on " + mYelpAccessTokenTimeExpired.String()) 
+	pResponseWriter.Header().Set("Content-Type", "application/json")
 
 	var lYelpParamSearchBusiness yelp.ParamSearchBusiness 
 	lDecoder := json.NewDecoder(pRequest.Body)
@@ -74,17 +71,35 @@ func HandlerSearchBusinessInYelp(pResponseWriter http.ResponseWriter, pRequest *
 	}
 	defer pRequest.Body.Close()
 
-	log.Println("Term: " + lYelpParamSearchBusiness.Term)
-	log.Println("Location: " + lYelpParamSearchBusiness.Location)
+
+	lYelpRespSearchBusinessMinFromMongoDB, lErr := mongo.GetRespSearchBusinessMin(lYelpParamSearchBusiness.Term, lYelpParamSearchBusiness.Location)
+	if lErr == nil {
+		if lYelpRespSearchBusinessMinFromMongoDB.Term == lYelpParamSearchBusiness.Term {
+			json.NewEncoder(pResponseWriter).Encode(lYelpRespSearchBusinessMinFromMongoDB)
+		        log.Println("Retrieved data from Mongo DB...")
+			return
+		}
+	}
+
+	if IsYelpAccessTokenExpired() {
+		SetYelpAccessToken()
+	}
+
+	log.Println("Yelp access token expiring on " + mYelpAccessTokenTimeExpired.String() + "...") 
 
 	lYelpRespSearchBusinessMin, lErr := yelp.SearchBusinessMin(lYelpParamSearchBusiness, mYelpAccessToken)
     	if lErr != nil {
 	        log.Println("Error searching businesses in Yelp: ", lErr)
     	}
-	log.Println(lYelpRespSearchBusinessMin.Total)
 
-	pResponseWriter.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(pResponseWriter).Encode(lYelpRespSearchBusinessMin)
+
+	lInsertIntoMongo, lErr := mongo.CreateRespSearchBusinessMin(lYelpRespSearchBusinessMin)
+	if lErr != nil {
+	        log.Println("Error decoding Json string: ", lErr)
+	}
+
+	log.Println("Insert into Mongo: ", lInsertIntoMongo)
 }
 
 func IsYelpAccessTokenExpired() (bool) {

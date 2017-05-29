@@ -1,0 +1,30 @@
+cd C:\Program Files\MongoDB\Server\3.2\bin
+
+Start DB
+mongod --storageEngine=mmapv1 --dbpath "C:\Users\fujitsu\go\src\github.com\simlenghong\yelp-fusion\db"
+
+Start Mongo Shell
+mongo
+
+Display all db
+show dbs
+
+Switch to DB
+use yelp
+
+Display all collections
+show collections
+
+Creation collection
+db.createCollection(name, options)
+db.createCollection("RespSearchBusinessMin", { autoIndexId: false })
+
+Drop collection
+db.collection.drop()
+
+Find records
+db.RespSearchBusinessMin.find()
+
+Delete records
+db.RespSearchBusinessMin.remove({})
+
